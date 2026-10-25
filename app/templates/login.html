@@ -22,9 +22,11 @@
       <input name="password" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2">
     </label>
     <button class="mt-6 w-full rounded-md bg-teal-400 text-slate-950 font-semibold py-2">Sign in</button>
+    {% if demo_accounts %}
     <div class="mt-6 text-xs text-slate-500 leading-5">
       Local preview accounts: admin / admin123! · noc / noc123! · support / support123! · acme / acme123! · billing / billing123!
     </div>
+    {% endif %}
   </form>
 </body>
 </html>

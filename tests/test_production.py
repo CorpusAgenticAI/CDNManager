@@ -118,7 +118,8 @@ def test_bootstrap_admin_created_once(tmp_path, monkeypatch):
 
     get_settings.cache_clear()
     with TestClient(create_app()) as client:
-        response = client.post("/login", data={"username": "owner", "password": "first-password-123"}, follow_redirects=False)
+        assert "admin123!" not in client.get("/login").text
+        response = client.post("/login", data={"username": " owner ", "password": "first-password-123"}, follow_redirects=False)
         assert response.status_code == 303
         assert client.get("/readyz").json() == {"status": "ok"}
 

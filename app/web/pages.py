@@ -111,15 +111,19 @@ def render(request: Request, name: str, user: User, login, **extra):
 
 @router.get("/login", response_class=HTMLResponse)
 async def login_form(request: Request):
-    return templates.TemplateResponse(request, "login.html", {"error": ""})
+    demo = request.app.state.settings.seed_demo
+    return templates.TemplateResponse(request, "login.html", {"error": "", "demo_accounts": demo})
 
 
 @router.post("/login")
 async def login(request: Request, username: str = Form(), password: str = Form(), db: AsyncSession = Depends(db_session)):
-    result = await db.execute(select(User).where(User.username == username))
+    result = await db.execute(select(User).where(User.username == username.strip()))
     user = result.scalar_one_or_none()
     if user is None or not user.active or not verify_password(password, user.password_hash):
-        return templates.TemplateResponse(request, "login.html", {"error": "Unknown username or password"}, status_code=401)
+        demo = request.app.state.settings.seed_demo
+        return templates.TemplateResponse(
+            request, "login.html", {"error": "Unknown username or password", "demo_accounts": demo}, status_code=401
+        )
     row = await request.app.state.store.put(db, user.id)
     await audit(db, user.username, "login", {})
     response = RedirectResponse("/", status_code=303)
