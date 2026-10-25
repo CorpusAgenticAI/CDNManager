@@ -102,12 +102,24 @@ GITHUB_REPO=OWNER/REPO bash deploy/gcp/github-setup.sh
 
 `github-setup.sh` creates a `cdnmanager-deploy` service account that only the `main` branch of that repository can use. It prints four values; add them in GitHub under **Settings → Secrets and variables → Actions → Variables**: `GCP_PROJECT_ID`, `GCP_REGION`, `GCP_WIF_PROVIDER`, `GCP_DEPLOY_SA`. After that, each push to `main` deploys, and the run summary shows the service URL. You can also start a deploy by hand from the **Actions** tab (**Test and deploy → Run workflow**).
 
+## Stopping and starting
+
+```bash
+bash deploy/gcp/control.sh status
+bash deploy/gcp/control.sh stop
+bash deploy/gcp/control.sh start
+```
+
+`stop` closes the app to outside traffic, scales it to zero instances, and stops the Cloud SQL instance. While stopped you pay only for database storage and backups (a few US dollars a month), and nodes cannot deliver telemetry. `start` brings the database up first, reopens the app, and waits until `/readyz` answers. Users, settings, and history are unchanged.
+
+Start the app before pushing to `main`. A deploy runs the migration job, which cannot reach a stopped database.
+
 ## Operating it
 
 | Task | Where |
 | --- | --- |
 | Logs | Cloud Run → `cdnmanager` → Logs. App lines are JSON with `severity`, so filters like `severity>=WARNING` work. |
-| Health | `/healthz` answers if the process is up; `/readyz` also checks the database. |
+| Health | `/readyz` checks the app and the database. (Cloud Run reserves `/healthz`, so that path returns Google's 404.) |
 | Backups | Cloud SQL → Backups. Daily at 02:00 IST, 14 kept, with point-in-time recovery. |
 | Restore a backup | Restore into a new instance, check it, then point `SQL_INSTANCE` at it and run `deploy.sh`. |
 | Rotate the DB password | Add a new version of `cdnmanager-db-password`, run `gcloud sql users set-password cdnmanager --instance=cdnmanager-pg --password="$(gcloud secrets versions access latest --secret=cdnmanager-db-password)"`, then `deploy.sh`. |
