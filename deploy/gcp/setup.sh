@@ -55,7 +55,7 @@ fi
 say "Secrets"
 for secret in "${DB_PASSWORD_SECRET}" "${ADMIN_PASSWORD_SECRET}"; do
   if ! gcloud secrets describe "${secret}" >/dev/null 2>&1; then
-    random_password | gcloud secrets create "${secret}" --replication-policy=automatic --data-file=-
+    printf '%s' "$(random_password)" | gcloud secrets create "${secret}" --replication-policy=automatic --data-file=-
   fi
 done
 

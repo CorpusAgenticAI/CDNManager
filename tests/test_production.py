@@ -69,6 +69,12 @@ def test_cloud_sql_url_survives_special_characters_in_password():
     assert settings.sync_database_url().drivername == "postgresql+psycopg"
 
 
+def test_secret_trailing_newline_is_not_part_of_password():
+    settings = Settings(_env_file=None, **{**CLOUD_SQL, "db_password": "abc123\n"}, bootstrap_admin_password="first-password-123\r\n")
+    assert settings.db_password == "abc123"
+    assert settings.bootstrap_admin_password == "first-password-123"
+
+
 def test_tcp_database_parts():
     settings = Settings(_env_file=None, db_user="u", db_password="p", db_name="d", db_host="10.0.0.5", db_port=6432)
     url = settings.async_database_url()

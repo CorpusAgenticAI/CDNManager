@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import model_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL, make_url
 
@@ -42,6 +42,12 @@ class Settings(BaseSettings):
     @property
     def is_production(self) -> bool:
         return self.environment.lower() in {"production", "prod"}
+
+    @field_validator("db_password", "bootstrap_admin_password")
+    @classmethod
+    def _drop_line_ending(cls, value: str) -> str:
+        """Secret Manager values written by shell tools often end in a newline that is not part of the password."""
+        return value.rstrip("\r\n")
 
     @model_validator(mode="after")
     def _production_defaults(self):
