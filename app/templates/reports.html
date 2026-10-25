@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Reports · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold mb-4">Reports</h1>
+<div class="grid md:grid-cols-3 gap-3 mb-6">
+  <div class="rounded-xl border border-slate-800 bg-slate-900 p-4"><div class="text-xs text-slate-400">Bandwidth saved</div><div class="text-xl">{{ kpis.bandwidth_saved_bytes|bytes }}</div></div>
+  <div class="rounded-xl border border-slate-800 bg-slate-900 p-4"><div class="text-xs text-slate-400">Cache hit ratio</div><div class="text-xl">{{ kpis.cache_hit_ratio_pct if kpis.cache_hit_ratio_pct is not none else "—" }}%</div></div>
+  <div class="rounded-xl border border-slate-800 bg-slate-900 p-4"><div class="text-xs text-slate-400">Unmapped streams</div><div class="text-xl">{{ kpis.unmapped_streams }}</div></div>
+</div>
+<h2 class="text-sm text-slate-300 mb-2">Top 10 by audience</h2>
+<table class="w-full text-sm mb-6">
+  {% for row in channels %}
+  <tr class="border-t border-slate-800"><td class="py-2">{{ row.name }}</td><td class="font-mono text-xs">{{ row.stream_uuid }}</td><td class="text-right">peak {{ row.peak_concurrent }}</td><td class="text-right">viewers ~{{ row.distinct_subscribers_est }}</td></tr>
+  {% endfor %}
+</table>
+<h2 class="text-sm text-slate-300 mb-2">Nodes by region</h2>
+<ul class="text-sm text-slate-300">
+  {% for region, count in regions %}<li>{{ region or "unset" }} · {{ count }}</li>{% endfor %}
+</ul>
+{% endblock %}

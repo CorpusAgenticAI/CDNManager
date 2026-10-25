@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Steering · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold">Steering</h1>
+<p class="text-sm text-slate-400 mb-4">Map a subscriber prefix, IP range, region, or network to the edge that should serve it.</p>
+<table class="w-full text-sm mb-6">
+  <thead class="text-slate-400 text-left"><tr><th class="py-2">Match</th><th>Value</th><th>Edge</th><th>Priority</th><th>Note</th></tr></thead>
+  {% for rule in rules %}
+  <tr class="border-t border-slate-800"><td class="py-2">{{ rule.match_type }}</td><td class="font-mono text-xs">{{ rule.match_value }}</td><td>{{ nodes.get(rule.node_id, "—") }}</td><td>{{ rule.priority }}</td><td class="text-slate-400">{{ rule.note }}</td></tr>
+  {% else %}<tr><td class="py-3 text-slate-500">No steering rules in scope.</td></tr>{% endfor %}
+</table>
+{% if user.role in ["super_admin", "noc"] %}
+<form method="post" action="/steering" class="grid md:grid-cols-3 gap-2">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <select name="match_type" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+    <option value="ip_cidr">IP range</option>
+    <option value="region">Region</option>
+    <option value="asn">Network (ASN)</option>
+    <option value="subscriber_prefix">Subscriber prefix</option>
+  </select>
+  <input name="match_value" placeholder="203.0.113.0/24 or South" required class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <select name="node_id" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">{% for edge in edges %}<option value="{{ edge.id }}">{{ edge.name }}</option>{% endfor %}</select>
+  <select name="tenant_id" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+    <option value="">Any tenant</option>
+    {% for tenant in tenants %}<option value="{{ tenant.id }}">{{ tenant.code }}</option>{% endfor %}
+  </select>
+  <input name="priority" type="number" value="100" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <button class="rounded-md bg-teal-400 text-slate-950 font-semibold">Add rule</button>
+</form>
+{% endif %}
+{% endblock %}

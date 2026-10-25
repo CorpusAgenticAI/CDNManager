@@ -1,0 +1,11 @@
+# gcloud builds submit uploads only what the image build needs.
+# Specs, documents, sample files and local databases stay on this machine.
+/*
+!/pyproject.toml
+!/app/
+!/alembic.ini
+!/alembic/
+!/Dockerfile
+!/.dockerignore
+__pycache__/
+*.py[cod]

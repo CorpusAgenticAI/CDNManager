@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Sessions · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold">Viewing sessions</h1>
+<p class="text-sm text-slate-400 mb-4">Pseudonymous by default. Resolving a handle to a subscriber requires subscriber_data:read and is written to the audit log.</p>
+<table class="w-full text-sm">
+  <thead class="text-slate-400 text-left"><tr><th class="py-2">Channel</th><th>Edge</th><th>Duration</th><th>Bytes</th><th>Aborts</th><th>Handle</th></tr></thead>
+  <tbody>
+  {% for row in sessions %}
+  <tr class="border-t border-slate-800 align-top">
+    <td class="py-2">{{ channels.get(row.stream_uuid, "unmapped") }}</td>
+    <td>{{ nodes.get(row.node_id, "—") }}</td>
+    <td class="tabular-nums">{{ row.duration_s }}s</td>
+    <td>{{ row.bytes_sent|bytes }} <span class="text-xs text-slate-500">{{ row.bytes_attribution }}</span></td>
+    <td>{{ row.abort_count }}</td>
+    <td class="font-mono text-xs">
+      {{ row.subscriber_pseudonym or "—" }}
+      {% if row.session_handle in registered %}<span class="text-teal-300">registered</span>{% elif not row.handle_redacted %}<span class="text-amber-300">unresolved</span>{% endif %}
+      {% if user.subscriber_data_read and row.session_handle %}
+      <form hx-post="/sessions/{{ row.id }}/resolve" hx-target="#res-{{ row.id }}" hx-swap="innerHTML" class="mt-1">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="text-teal-300">Resolve</button>
+      </form>
+      <div id="res-{{ row.id }}" class="text-slate-300 mt-1"></div>
+      {% endif %}
+    </td>
+  </tr>
+  {% else %}
+  <tr><td class="py-3 text-slate-500">No sessions in scope.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

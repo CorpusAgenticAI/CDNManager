@@ -1,0 +1,1 @@
+"""CDN Manager application package."""

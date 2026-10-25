@@ -1,0 +1,8 @@
+# Only pyproject.toml, app/, alembic.ini and alembic/ belong in the image.
+*
+!pyproject.toml
+!app
+!alembic.ini
+!alembic
+**/__pycache__
+**/*.py[cod]

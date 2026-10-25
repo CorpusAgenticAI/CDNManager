@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Capacity · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold">Capacity</h1>
+<p class="text-sm text-slate-400 mb-4">Current traffic against the link size. Projected load is the 15-minute peak plus 15 percent. A location needs more capacity when current use is at least 70 percent, or the projection reaches 80 percent.</p>
+<table class="w-full text-sm">
+  <thead class="text-slate-400 text-left"><tr><th class="py-2">Node</th><th>Place</th><th>Current</th><th>Peak</th><th>Projected</th><th>Link</th><th>Use</th><th></th></tr></thead>
+  {% for row in rows %}
+  <tr class="border-t border-slate-800">
+    <td class="py-2"><a class="text-teal-300" href="/nodes/{{ row.node.id }}">{{ row.node.name }}</a></td>
+    <td>{{ row.node.city }} · {{ row.node.region }}</td>
+    <td class="tabular-nums">{{ row.current_mbps }} Mbps</td>
+    <td class="tabular-nums">{{ row.peak_mbps }}</td>
+    <td class="tabular-nums">{{ row.projected_mbps }}</td>
+    <td class="tabular-nums">{{ row.capacity_mbps }}</td>
+    <td class="tabular-nums">{{ row.utilization_pct if row.utilization_pct is not none else "—" }}%</td>
+    <td>{% if row.needs_capacity %}<span class="text-amber-300">Add capacity</span>{% else %}<span class="text-slate-500">Within plan</span>{% endif %}</td>
+  </tr>
+  {% else %}
+  <tr><td class="py-3 text-slate-500">No enabled nodes in scope.</td></tr>
+  {% endfor %}
+</table>
+{% endblock %}

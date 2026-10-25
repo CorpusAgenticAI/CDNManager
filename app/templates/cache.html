@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Cache · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold">Cache</h1>
+<p class="text-sm text-slate-400 mb-4">Pre-position popular content before the peak, or purge a file, channel, content group, or a whole cache. Both actions are audited.</p>
+{% if popular %}
+<p class="text-sm text-slate-300 mb-4">Frequently requested now: {% for row in popular %}{{ row.name }}{% if not loop.last %}, {% endif %}{% endfor %}.</p>
+{% endif %}
+{% if user.role in ["super_admin", "noc"] %}
+<div class="grid lg:grid-cols-2 gap-4 mb-6">
+  <form method="post" action="/cache/preposition" class="rounded-xl border border-slate-800 bg-slate-900 p-4 grid gap-2">
+    <h2 class="font-medium">Pre-position</h2>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <select name="stream_uuid" class="rounded-md bg-slate-950 border border-slate-700 px-3 py-2">{% for channel in channels %}<option value="{{ channel.stream_uuid }}">{{ channel.name }} · {{ channel.protocol }} {{ channel.kind }}</option>{% endfor %}</select>
+    <select name="node_id" class="rounded-md bg-slate-950 border border-slate-700 px-3 py-2">{% for edge in edges %}<option value="{{ edge.id }}">{{ edge.name }} · {{ edge.city }}</option>{% endfor %}</select>
+    <button class="rounded-md bg-teal-400 text-slate-950 font-semibold py-2">Request fill</button>
+  </form>
+  <form method="post" action="/cache/purge" class="rounded-xl border border-slate-800 bg-slate-900 p-4 grid gap-2">
+    <h2 class="font-medium">Purge</h2>
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <select name="scope" class="rounded-md bg-slate-950 border border-slate-700 px-3 py-2">
+      <option value="file">File</option><option value="channel">Channel</option><option value="group">Content group</option><option value="cache">Complete cache</option>
+    </select>
+    <input name="target" placeholder="File path, channel, or group" class="rounded-md bg-slate-950 border border-slate-700 px-3 py-2">
+    <select name="node_id" class="rounded-md bg-slate-950 border border-slate-700 px-3 py-2">
+      <option value="">All edges</option>
+      {% for edge in edges %}<option value="{{ edge.id }}">{{ edge.name }}</option>{% endfor %}
+    </select>
+    <button class="rounded-md border border-slate-600 py-2">Request purge</button>
+  </form>
+</div>
+{% endif %}
+<h2 class="text-sm text-slate-300 mb-2">Pre-position requests</h2>
+{% for job in jobs %}<div class="text-sm border-t border-slate-800 py-1">{{ job.created_at|when }} · {{ nodes.get(job.node_id, "—") }} · {{ job.stream_uuid }} · {{ job.requested_by }}</div>{% else %}<p class="text-sm text-slate-500">None yet.</p>{% endfor %}
+<h2 class="text-sm text-slate-300 mt-4 mb-2">Purge requests</h2>
+{% for row in purges %}<div class="text-sm border-t border-slate-800 py-1">{{ row.created_at|when }} · {{ row.scope }} {{ row.target or "entire cache" }} · {{ nodes.get(row.node_id, "all edges") }} · {{ row.requested_by }}</div>{% else %}<p class="text-sm text-slate-500">None yet.</p>{% endfor %}
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Origins · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold">Origins</h1>
+<p class="text-sm text-slate-400 mb-4">Each group has a primary origin and a secondary. When the primary fails, traffic is directed to the secondary.</p>
+{% for group in groups %}
+<div class="rounded-xl border border-slate-800 bg-slate-900 p-4 mb-3 text-sm">
+  <div class="flex justify-between">
+    <div>Primary {{ group.primary.name }} · {{ group.primary.health }}</div>
+    <div class="uppercase text-xs {% if group.redirected %}text-amber-300{% elif group.status == 'unavailable' %}text-rose-300{% else %}text-teal-300{% endif %}">{{ group.status }}</div>
+  </div>
+  <div class="text-slate-400 mt-1">Secondary {{ group.secondary.name if group.secondary else "—" }}{% if group.secondary %} · {{ group.secondary.health }}{% endif %}</div>
+  <div class="mt-2">Active origin {{ group.active.name if group.active else "none" }}{% if group.active %} · {{ group.active.base_url }}{% endif %}</div>
+</div>
+{% else %}
+<p class="text-sm text-slate-500 mb-4">No primary/secondary pair yet.</p>
+{% endfor %}
+<table class="w-full text-sm mb-6">
+  <thead class="text-slate-400 text-left"><tr><th class="py-2">Name</th><th>Role</th><th>Status</th><th>URL</th></tr></thead>
+  {% for node in origins %}
+  <tr class="border-t border-slate-800"><td class="py-2"><a class="text-teal-300" href="/nodes/{{ node.id }}">{{ node.name }}</a></td><td>{{ node.origin_role or "—" }}</td><td>{{ node.status }}</td><td class="font-mono text-xs">{{ node.base_url }}</td></tr>
+  {% endfor %}
+</table>
+{% if user.role in ["super_admin", "noc"] and origins|length > 1 %}
+<form method="post" action="/origins/pair" class="grid md:grid-cols-3 gap-2">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <select name="primary_id" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">{% for node in origins %}<option value="{{ node.id }}">Primary {{ node.name }}</option>{% endfor %}</select>
+  <select name="secondary_id" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">{% for node in origins %}<option value="{{ node.id }}" {% if loop.index == 2 %}selected{% endif %}>Secondary {{ node.name }}</option>{% endfor %}</select>
+  <button class="rounded-md bg-teal-400 text-slate-950 font-semibold">Save pair</button>
+</form>
+{% endif %}
+{% endblock %}

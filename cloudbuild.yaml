@@ -1,0 +1,81 @@
+# Build, migrate, deploy. Used by deploy/gcp/deploy.sh and by a Cloud Build trigger on the main branch.
+# The image is tagged with the build id, so every revision maps to one immutable image.
+
+substitutions:
+  _REGION: asia-south1
+  _SERVICE: cdnmanager
+  _REPO: cdnmanager
+  _SQL_INSTANCE: cdnmanager-pg
+  _DB_NAME: cdnmanager
+  _DB_USER: cdnmanager
+  _ADMIN_USERNAME: admin
+  _RUN_SA_NAME: cdnmanager-run
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "4"
+  _CPU: "1"
+  _MEMORY: 1Gi
+  _IMAGE: ${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_REPO}/${_SERVICE}:${BUILD_ID}
+  _CONNECTION: ${PROJECT_ID}:${_REGION}:${_SQL_INSTANCE}
+  _RUN_SA: ${_RUN_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com
+
+options:
+  dynamicSubstitutions: true
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_IMAGE}", "."]
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_IMAGE}"]
+
+  - id: migration-job
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - jobs
+      - deploy
+      - ${_SERVICE}-migrate
+      - --image=${_IMAGE}
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --set-cloudsql-instances=${_CONNECTION}
+      - --set-env-vars=ENVIRONMENT=production,DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},CLOUD_SQL_INSTANCE=${_CONNECTION}
+      - --set-secrets=DB_PASSWORD=${_SERVICE}-db-password:latest
+      - --command=alembic
+      - --args=upgrade,head
+      - --max-retries=0
+      - --task-timeout=600s
+
+  - id: migrate
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args: ["run", "jobs", "execute", "${_SERVICE}-migrate", "--region=${_REGION}", "--wait"]
+
+  - id: deploy
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_IMAGE}
+      - --region=${_REGION}
+      - --service-account=${_RUN_SA}
+      - --set-cloudsql-instances=${_CONNECTION}
+      - --set-env-vars=ENVIRONMENT=production,DB_USER=${_DB_USER},DB_NAME=${_DB_NAME},CLOUD_SQL_INSTANCE=${_CONNECTION},TRUSTED_PROXY_HOPS=1,REDIS_URL=,BOOTSTRAP_ADMIN_USERNAME=${_ADMIN_USERNAME}
+      - --set-secrets=DB_PASSWORD=${_SERVICE}-db-password:latest,BOOTSTRAP_ADMIN_PASSWORD=${_SERVICE}-admin-password:latest
+      # Background loops (offline detection, usage periods, retention) need CPU between requests.
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+      - --no-cpu-throttling
+      - --cpu=${_CPU}
+      - --memory=${_MEMORY}
+      - --concurrency=80
+      - --timeout=60s
+      - --port=8080
+      # The console has its own login and node telemetry is HMAC-signed, so the URL is public.
+      - --allow-unauthenticated

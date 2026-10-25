@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ node.name }} · CDN Manager{% endblock %}
+{% block body %}
+<div class="flex items-start justify-between">
+  <div>
+    <h1 class="text-2xl font-semibold">{{ node.name }}</h1>
+    <p class="text-sm text-slate-400 font-mono">{{ node.id }}</p>
+    <p class="text-sm text-slate-300 mt-2">{{ node.tier }} {{ node.size_class }} · {{ node.city }}, {{ node.region }} · ASN {{ node.asn or "—" }}</p>
+    <p class="text-sm text-slate-400">{{ node.base_url }} · {{ node.status }} · nginx {{ "up" if node.nginx_running else "down" }}</p>
+    {% if show_secret %}
+    <p class="mt-3 rounded-md bg-amber-950 text-amber-100 px-3 py-2 text-sm font-mono">Signing secret (shown once): {{ node.signing_secret }}</p>
+    {% endif %}
+  </div>
+  {% if user.role in ["super_admin", "noc"] %}
+  <form method="post" action="/nodes/{{ node.id }}/toggle">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <button class="rounded-md border border-slate-600 px-3 py-2 text-sm">{{ "Disable" if node.enabled else "Enable" }}</button>
+  </form>
+  {% endif %}
+</div>
+<div class="mt-6 rounded-xl border border-slate-800 bg-slate-900 p-4">
+  <canvas id="nodechart" height="100"></canvas>
+</div>
+<div class="mt-4 grid md:grid-cols-2 gap-4">
+  <div class="rounded-xl border border-slate-800 p-4">
+    <h2 class="text-sm text-slate-300 mb-2">Recent samples</h2>
+    {% for sample in samples %}
+    <div class="border-t border-slate-800 py-1 text-xs font-mono text-slate-400">{{ sample.ts|when }} cpu {{ sample.cpu_pct }} interval {{ sample.interval_s }}s</div>
+    {% endfor %}
+  </div>
+  <div class="rounded-xl border border-slate-800 p-4">
+    <h2 class="text-sm text-slate-300 mb-2">Alerts</h2>
+    {% for alert in alerts %}
+    <div class="border-t border-slate-800 py-1 text-sm">{{ alert.severity }} · {{ alert.message }}</div>
+    {% else %}<p class="text-sm text-slate-500">None.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+fetch("/ui/nodes/{{ node.id }}/series").then(r => r.json()).then(data => {
+  new Chart(document.getElementById("nodechart"), {
+    type: "line",
+    data: { labels: data.labels, datasets: [
+      { label: "CPU %", data: data.cpu, borderColor: "#2dd4bf", pointRadius: 0 },
+      { label: "Mbps", data: data.mbps, borderColor: "#fbbf24", pointRadius: 0 }
+    ]},
+    options: { plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: { x: { ticks: { color: "#94a3b8", maxTicksLimit: 6 } }, y: { ticks: { color: "#94a3b8" } } } }
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.env
+*.db
+*.db-shm
+*.db-wal
+cdnmanager.db
+.local/
+build/
+dist/
+
+# Source material from the customer stays out of the repository.
+/*.pdf
+/*.pptx
+/*.xlsx
+/*.docx
+/*.zip
+/*.png
+/Test file_*/

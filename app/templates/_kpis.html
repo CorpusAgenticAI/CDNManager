@@ -1,0 +1,34 @@
+<div class="grid grid-cols-2 xl:grid-cols-5 gap-3">
+  {% set cards = [
+    ("Cache hit ratio", kpis.cache_hit_ratio_pct, "%"),
+    ("Bandwidth saved", kpis.bandwidth_saved_pct, "%"),
+    ("Total CDN traffic", kpis.total_cdn_mbps, "Mbps"),
+    ("Origin traffic", kpis.origin_traffic_mbps, "Mbps"),
+    ("Peak", kpis.peak_value, kpis.peak_unit),
+    ("Concurrent streams", kpis.concurrent_streams, ""),
+    ("Average response", kpis.avg_response_ms, "ms"),
+    ("Edge availability", kpis.edge_availability_pct, "%"),
+    ("Origin availability", kpis.origin_availability_pct, "%"),
+    ("CPU / RAM / storage", none, ""),
+  ] %}
+  {% for label, value, unit in cards %}
+  <div class="rounded-xl border border-slate-800 bg-slate-900 p-4">
+    <div class="text-xs uppercase tracking-wide text-slate-400">{{ label }}</div>
+    {% if label == "CPU / RAM / storage" %}
+    <div class="mt-2 text-lg font-semibold tabular-nums">{{ kpis.cpu_pct if kpis.cpu_pct is not none else "—" }}% <span class="text-slate-500">/</span> {{ kpis.mem_used_pct if kpis.mem_used_pct is not none else "—" }}% <span class="text-slate-500">/</span> {{ kpis.storage_used_pct if kpis.storage_used_pct is not none else "—" }}%</div>
+    {% else %}
+    <div class="mt-2 text-2xl font-semibold tabular-nums">{{ value if value is not none else "—" }} <span class="text-sm text-slate-400">{{ unit }}</span></div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% if kpis.region_traffic %}
+<div class="mt-4 rounded-xl border border-slate-800 bg-slate-900 p-4">
+  <h2 class="text-sm font-medium text-slate-300 mb-2">Traffic by region</h2>
+  <div class="flex flex-wrap gap-4 text-sm">
+    {% for row in kpis.region_traffic %}
+    <div>{{ row.region }} <span class="tabular-nums text-slate-300">{{ row.mbps }} Mbps</span></div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}

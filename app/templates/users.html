@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Users · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold mb-4">Users</h1>
+<table class="w-full text-sm mb-6">
+  {% for row in users %}
+  <tr class="border-t border-slate-800"><td class="py-2">{{ row.username }}</td><td>{{ row.role }}</td><td>{% if row.subscriber_data_read %}subscriber_data:read{% endif %}</td></tr>
+  {% endfor %}
+</table>
+<form method="post" action="/users" class="grid md:grid-cols-3 gap-2">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <input name="username" placeholder="Username" required class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <input name="password" type="password" placeholder="Password" required class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <select name="role" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+    <option>noc</option><option>tenant_user</option><option>support</option><option>billing</option><option>super_admin</option>
+  </select>
+  <select name="tenant_id" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+    <option value="">No tenant</option>
+    {% for tenant in tenants %}<option value="{{ tenant.id }}">{{ tenant.code }}</option>{% endfor %}
+  </select>
+  <label class="text-sm text-slate-300 flex items-center gap-2"><input type="checkbox" name="subscriber_data_read"> subscriber_data:read</label>
+  <button class="rounded-md bg-teal-400 text-slate-950 font-semibold">Create user</button>
+</form>
+{% endblock %}

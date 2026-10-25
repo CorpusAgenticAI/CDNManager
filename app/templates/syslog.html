@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Syslog · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold">Central syslog</h1>
+<p class="text-sm text-slate-400 mb-4">Forensic sample of edge access logs. This store is not a source for KPIs or invoices. Retention is 14 days.</p>
+{% for row in messages %}
+<div class="border-t border-slate-800 py-2 font-mono text-xs"><span class="text-slate-500">{{ row.received_at|when }}</span> <span class="text-amber-200">{{ row.severity }}</span> {{ row.message }}</div>
+{% else %}<p class="text-slate-500 text-sm">No log lines yet.</p>{% endfor %}
+{% endblock %}

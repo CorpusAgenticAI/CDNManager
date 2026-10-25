@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in · CDN Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-950 text-slate-100 font-sans flex items-center justify-center p-6">
+  <form method="post" action="/login" class="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-8 shadow-2xl">
+    <div class="text-xs uppercase tracking-widest text-teal-300">Corpus</div>
+    <h1 class="text-2xl font-semibold mt-1">CDN Manager</h1>
+    <p class="text-sm text-slate-400 mt-2">Node telemetry, viewership, and the NOC console.</p>
+    {% if error %}
+    <p class="mt-4 rounded-md bg-rose-950 text-rose-200 px-3 py-2 text-sm">{{ error }}</p>
+    {% endif %}
+    <label class="block mt-6 text-sm text-slate-300">Username
+      <input name="username" autocomplete="username" required class="mt-1 w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2">
+    </label>
+    <label class="block mt-4 text-sm text-slate-300">Password
+      <input name="password" type="password" autocomplete="current-password" required class="mt-1 w-full rounded-md bg-slate-950 border border-slate-700 px-3 py-2">
+    </label>
+    <button class="mt-6 w-full rounded-md bg-teal-400 text-slate-950 font-semibold py-2">Sign in</button>
+    <div class="mt-6 text-xs text-slate-500 leading-5">
+      Local preview accounts: admin / admin123! · noc / noc123! · support / support123! · acme / acme123! · billing / billing123!
+    </div>
+  </form>
+</body>
+</html>

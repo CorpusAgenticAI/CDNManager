@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Programmes · CDN Manager{% endblock %}
+{% block body %}
+<h1 class="text-2xl font-semibold">Programme viewership</h1>
+<p class="text-sm text-slate-400 mb-4">Audience is the overlap of a viewing session with the programme. Figures carry schedule confidence because a slipped live schedule misattributes everything after it.</p>
+{% for row in programmes %}
+<div class="rounded-xl border border-slate-800 bg-slate-900 p-4 mb-3">
+  <div class="flex justify-between"><h2 class="font-medium">{{ row.title }}</h2><span class="text-xs uppercase text-slate-400">{{ row.schedule_confidence }}</span></div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3 text-sm">
+    <div>Average audience <div class="text-lg">{{ row.average_audience }}</div></div>
+    <div>Reach 60s <div class="text-lg">{{ row.reach_60s }}</div></div>
+    <div>Reach 300s <div class="text-lg">{{ row.reach_300s }}</div></div>
+    <div>Peak <div class="text-lg">{{ row.peak_audience }}</div></div>
+  </div>
+</div>
+{% else %}<p class="text-slate-500 text-sm">No programmes ingested.</p>{% endfor %}
+{% if user.role in ["super_admin", "noc"] %}
+<form method="post" action="/epg" class="mt-4 grid md:grid-cols-3 gap-2">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <select name="stream_uuid" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">{% for channel in channels %}<option value="{{ channel.stream_uuid }}">{{ channel.name }}</option>{% endfor %}</select>
+  <input name="title" placeholder="Title" required class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <input name="programme_ext_id" placeholder="EPG id" required class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <input name="genre" placeholder="Genre" class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <input name="start" type="datetime-local" required class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <input name="end" type="datetime-local" required class="rounded-md bg-slate-900 border border-slate-700 px-3 py-2">
+  <button class="rounded-md bg-teal-400 text-slate-950 font-semibold">Add programme</button>
+</form>
+{% endif %}
+{% endblock %}

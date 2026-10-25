@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}Overview · CDN Manager{% endblock %}
+{% block body %}
+<div class="flex items-end justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold">NOC overview</h1>
+    <p class="text-sm text-slate-400">{{ kpis.nodes_online }} of {{ kpis.nodes_total }} nodes reporting · CPU {{ kpis.cpu_pct if kpis.cpu_pct is not none else "—" }}% · memory {{ kpis.mem_used_pct if kpis.mem_used_pct is not none else "—" }}% · cache disk {{ kpis.storage_used_pct if kpis.storage_used_pct is not none else "—" }}%</p>
+  </div>
+  <div class="text-xs text-slate-500">Bandwidth saved {{ kpis.bandwidth_saved_bytes|bytes }}</div>
+</div>
+<div id="kpis" hx-get="/partials/kpis" hx-trigger="every 15s" hx-swap="innerHTML">
+  {% include "_kpis.html" %}
+</div>
+<div class="grid lg:grid-cols-3 gap-4 mt-6">
+  <div class="lg:col-span-2 rounded-xl border border-slate-800 bg-slate-900 p-4">
+    <h2 class="text-sm font-medium text-slate-300 mb-3">Traffic and cache hit ratio</h2>
+    <canvas id="traffic" height="120"></canvas>
+  </div>
+  <div class="rounded-xl border border-slate-800 bg-slate-900 p-4">
+    <h2 class="text-sm font-medium text-slate-300 mb-3">Top 10 channels</h2>
+    <table class="w-full text-sm">
+      <tbody>
+      {% for row in channels %}
+        <tr class="border-t border-slate-800">
+          <td class="py-2">{{ row.name }}{% if not row.mapped %} <span class="text-amber-300">unmapped</span>{% endif %}</td>
+          <td class="py-2 text-right tabular-nums">{{ row.peak_concurrent }}</td>
+        </tr>
+      {% else %}
+        <tr><td class="text-slate-500">No viewership yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="mt-4 rounded-xl border border-slate-800 bg-slate-900 p-4">
+  <h2 class="text-sm font-medium text-slate-300 mb-3">Open alerts</h2>
+  {% for alert in alerts %}
+  <div class="flex justify-between border-t border-slate-800 py-2 text-sm">
+    <span><span class="uppercase text-xs text-rose-300">{{ alert.severity }}</span> {{ alert.message }}</span>
+    <span class="text-slate-500">{{ alert.type }}</span>
+  </div>
+  {% else %}
+  <p class="text-sm text-slate-500">No open alerts.</p>
+  {% endfor %}
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+async function draw() {
+  const response = await fetch("/ui/series");
+  if (!response.ok) return;
+  const data = await response.json();
+  const chart = Chart.getChart("traffic");
+  if (chart) chart.destroy();
+  new Chart(document.getElementById("traffic"), {
+    type: "line",
+    data: {
+      labels: data.labels,
+      datasets: [
+        { label: "CDN Mbps", data: data.traffic_mbps, borderColor: "#2dd4bf", tension: 0.2, pointRadius: 0 },
+        { label: "Hit ratio %", data: data.chr_pct, borderColor: "#fbbf24", tension: 0.2, pointRadius: 0 }
+      ]
+    },
+    options: { plugins: { legend: { labels: { color: "#cbd5e1" } } }, scales: { x: { ticks: { color: "#94a3b8", maxTicksLimit: 8 } }, y: { ticks: { color: "#94a3b8" } } } }
+  });
+}
+draw();
+setInterval(draw, 15000);
+</script>
+{% endblock %}
